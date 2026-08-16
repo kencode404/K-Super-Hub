@@ -1,7 +1,7 @@
 {
   "id": "/K-Super-Hub/",
-  "name": "K-Super Hub",
-  "short_name": "K-Super Hub",
+  "name": "K-SuperHub",
+  "short_name": "K-SuperHub",
   "description": "One account for every Kencode workspace.",
   "start_url": "/K-Super-Hub/",
   "scope": "/K-Super-Hub/",

@@ -79,9 +79,9 @@ function GoogleMark() {
 
 function Brand() {
   return (
-    <a className="brand" href={HUB_PATH} aria-label="K-Super Hub home">
+    <a className="brand" href={HUB_PATH} aria-label="K-SuperHub home">
       <span className="brand-mark brand-image-mark" aria-hidden="true"><img src={HUB_ICON} alt="" /></span>
-      <span><strong>K-Super</strong><small>HUB</small></span>
+      <strong>K-SuperHub</strong>
     </a>
   )
 }
@@ -172,7 +172,7 @@ function AuthScreen({ onSession }: { onSession: (session: Session) => void }) {
         <div className="auth-card">
           {returnApp && <p className="return-chip"><ArrowRight /> Continue to {returnApp.name}</p>}
           <p className="eyebrow">{mode === 'login' ? 'Welcome back' : 'Join the hub'}</p>
-          <h2 id="form-title">{mode === 'login' ? 'Access your workspace' : 'Create your K-Super account'}</h2>
+          <h2 id="form-title">{mode === 'login' ? 'Access your workspace' : 'Create your K-SuperHub account'}</h2>
           <p className="form-intro">{mode === 'login' ? 'Your apps are waiting on the other side.' : 'One secure account will unlock your connected apps.'}</p>
 
           <button className="google-button" type="button" onClick={handleGoogleAuth} disabled={loading}>
@@ -253,7 +253,7 @@ function App() {
     if (destination) continueTo(destination)
   }, [session])
 
-  if (loading) return <main className="boot-screen"><span className="brand-mark brand-image-mark" aria-hidden="true"><img src={HUB_ICON} alt="" /></span><SpinnerGap className="spin" aria-label="Loading K-Super Hub" /></main>
+  if (loading) return <main className="boot-screen"><span className="brand-mark brand-image-mark" aria-hidden="true"><img src={HUB_ICON} alt="" /></span><SpinnerGap className="spin" aria-label="Loading K-SuperHub" /></main>
   return session ? <HubDashboard session={session} /> : <AuthScreen onSession={setSession} />
 }
 
