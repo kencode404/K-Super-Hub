@@ -25,6 +25,7 @@ const apps = [
     description: 'See the change. Know your worth.',
     eyebrow: 'Personal finance',
     icon: ChartLineUp,
+    image: `${import.meta.env.BASE_URL}worthdelta-icon.png`,
     accent: 'lime',
   },
 ] as const
@@ -218,7 +219,7 @@ function HubDashboard({ session }: { session: Session }) {
         <div className="app-grid">
           {apps.map((app) => {
             const Icon = app.icon
-            return <a className={`app-card ${app.accent}`} href={app.path} key={app.path}><span className="app-icon"><Icon /></span><span className="app-copy"><small>{app.eyebrow}</small><strong>{app.name}</strong><p>{app.description}</p></span><span className="app-arrow"><ArrowRight /></span></a>
+            return <a className={`app-card ${app.accent}`} href={app.path} key={app.path}><span className="app-icon has-image"><img src={app.image} alt="" /><Icon className="fallback-icon" /></span><span className="app-copy"><small>{app.eyebrow}</small><strong>{app.name}</strong><p>{app.description}</p></span><span className="app-arrow"><ArrowRight /></span></a>
           })}
           <article className="app-card coming-soon"><span className="app-icon"><Sparkle /></span><span className="app-copy"><small>Next workspace</small><strong>More to come</strong><p>Your future apps will appear here.</p></span></article>
         </div>
