@@ -1,0 +1,31 @@
+{
+  "id": "/K-Super-Hub/",
+  "name": "K-Super Hub",
+  "short_name": "K-Super",
+  "description": "One account for every Kencode workspace.",
+  "start_url": "/K-Super-Hub/",
+  "scope": "/K-Super-Hub/",
+  "display": "standalone",
+  "background_color": "#080c19",
+  "theme_color": "#0b1020",
+  "icons": [
+    {
+      "src": "icons/k-super-hub-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/k-super-hub-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/k-super-hub-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

@@ -3,6 +3,9 @@
 K-Super Hub is the shared account gateway and application directory for Kencode
 apps hosted under `kencode404.github.io`.
 
+The Hub is installable as a PWA and uses the K-Super Hub artwork for browser,
+iPhone, Android, and maskable home-screen icons.
+
 ## Authentication flow
 
 An app sends signed-out visitors to the hub with a validated return path:

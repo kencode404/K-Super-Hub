@@ -17,6 +17,7 @@ type AuthMode = 'login' | 'signup'
 const HUB_PATH = '/K-Super-Hub/'
 const RETURN_KEY = 'k-super-hub:return-to'
 const PENDING_KEY = 'k-super-hub:auth-return-pending'
+const HUB_ICON = `${import.meta.env.BASE_URL}k-super-hub-icon.png`
 
 const apps = [
   {
@@ -79,7 +80,7 @@ function GoogleMark() {
 function Brand() {
   return (
     <a className="brand" href={HUB_PATH} aria-label="K-Super Hub home">
-      <span className="brand-mark" aria-hidden="true">K</span>
+      <span className="brand-mark brand-image-mark" aria-hidden="true"><img src={HUB_ICON} alt="" /></span>
       <span><strong>K-Super</strong><small>HUB</small></span>
     </a>
   )
@@ -212,7 +213,7 @@ function HubDashboard({ session }: { session: Session }) {
       </header>
       <section className="hub-hero">
         <div><p className="eyebrow">Command center</p><h1>Good to see you, {displayName}.</h1><p>Your connected apps are ready. One account keeps the doors open.</p></div>
-        <div className="hub-pulse" aria-hidden="true"><span>K</span></div>
+        <div className="hub-pulse" aria-hidden="true"><span><img src={HUB_ICON} alt="" /></span></div>
       </section>
       <section className="apps-section" aria-labelledby="apps-title">
         <div className="section-heading"><div><p className="eyebrow">Your collection</p><h2 id="apps-title">Connected apps</h2></div><span>{apps.length} live</span></div>
@@ -252,7 +253,7 @@ function App() {
     if (destination) continueTo(destination)
   }, [session])
 
-  if (loading) return <main className="boot-screen"><span className="brand-mark">K</span><SpinnerGap className="spin" aria-label="Loading K-Super Hub" /></main>
+  if (loading) return <main className="boot-screen"><span className="brand-mark brand-image-mark" aria-hidden="true"><img src={HUB_ICON} alt="" /></span><SpinnerGap className="spin" aria-label="Loading K-Super Hub" /></main>
   return session ? <HubDashboard session={session} /> : <AuthScreen onSession={setSession} />
 }
 

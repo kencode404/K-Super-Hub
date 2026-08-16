@@ -25,6 +25,8 @@ svg { flex: 0 0 auto; }
 
 .brand { display: inline-flex; align-items: center; gap: 12px; width: fit-content; }
 .brand-mark { display: grid; place-items: center; width: 42px; height: 42px; border: 1px solid rgba(124,247,201,.55); border-radius: 13px; color: var(--mint); background: linear-gradient(145deg, rgba(124,247,201,.16), rgba(169,148,255,.08)); box-shadow: 0 0 30px rgba(124,247,201,.12); font: 700 22px/1 'Space Grotesk', sans-serif; }
+.brand-image-mark { overflow: hidden; padding: 0; background: #050505; }
+.brand-image-mark img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .brand > span:last-child { display: grid; line-height: 1; }
 .brand strong { font: 700 18px/1.1 'Space Grotesk', sans-serif; letter-spacing: -.03em; }
 .brand small { margin-top: 5px; color: var(--muted); font-size: 9px; font-weight: 700; letter-spacing: .3em; }
@@ -103,7 +105,8 @@ button:disabled { cursor: wait; opacity: .62; transform: none !important; }
 .hub-hero h1 { max-width: 760px; margin: 0; font: 600 clamp(43px, 6vw, 82px)/.96 'Space Grotesk', sans-serif; letter-spacing: -.065em; }
 .hub-hero p:last-child { max-width: 570px; margin: 23px 0 0; color: var(--muted); font-size: 18px; line-height: 1.6; }
 .hub-pulse { display: grid; place-items: center; width: clamp(120px, 16vw, 210px); aspect-ratio: 1; border: 1px solid rgba(124,247,201,.18); border-radius: 50%; box-shadow: 0 0 0 30px rgba(124,247,201,.025), 0 0 0 60px rgba(124,247,201,.018); }
-.hub-pulse span { display: grid; place-items: center; width: 58%; aspect-ratio: 1; border-radius: 28%; color: var(--mint); background: linear-gradient(145deg, rgba(124,247,201,.18), rgba(169,148,255,.12)); font: 700 clamp(36px, 5vw, 70px) 'Space Grotesk', sans-serif; }
+.hub-pulse span { display: grid; place-items: center; width: 58%; aspect-ratio: 1; overflow: hidden; border-radius: 28%; color: var(--mint); background: linear-gradient(145deg, rgba(124,247,201,.18), rgba(169,148,255,.12)); font: 700 clamp(36px, 5vw, 70px) 'Space Grotesk', sans-serif; }
+.hub-pulse img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .apps-section { padding-top: 35px; }
 .section-heading { display: flex; align-items: end; justify-content: space-between; margin-bottom: 23px; }
 .section-heading h2 { margin: 0; font: 600 28px 'Space Grotesk', sans-serif; }
