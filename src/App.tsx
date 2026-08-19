@@ -234,15 +234,33 @@ function App() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    void supabase.auth.getSession().then(({ data }) => {
+    let active = true
+
+    async function restoreSession() {
+      const { data } = await supabase.auth.getSession()
+      if (!active) return
       setSession(data.session)
       setLoading(false)
-    })
+    }
+
+    void restoreSession()
+
     const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      if (!active) return
       setSession(nextSession)
       setLoading(false)
     })
-    return () => data.subscription.unsubscribe()
+
+    // Launching without a connection can leave a stored session unrecovered.
+    // Retry once the device is back online rather than asking for a sign-in.
+    const retryRestore = () => void restoreSession()
+    window.addEventListener('online', retryRestore)
+
+    return () => {
+      active = false
+      window.removeEventListener('online', retryRestore)
+      data.subscription.unsubscribe()
+    }
   }, [])
 
   useEffect(() => {
