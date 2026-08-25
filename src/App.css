@@ -170,7 +170,11 @@ a.app-card:hover { transform: translateY(-4px); border-color: rgba(124,247,201,.
 .money-input input:focus { box-shadow: none; }
 .range-field > span { display: flex; align-items: center; justify-content: space-between; }
 .range-field i { font-style: normal; }
-.range-field output { color: var(--mint); font: 700 12px 'Space Grotesk', sans-serif; }
+.range-value { display: inline-flex; align-items: center; gap: 4px; color: var(--mint); font: 700 12px 'Space Grotesk', sans-serif; }
+.range-value-input { width: 58px; height: 25px; padding: 0 3px; border: 1px solid rgba(124,247,201,.24); border-radius: 7px; color: var(--mint); background: rgba(124,247,201,.06); box-shadow: none; font: 700 12px 'Space Grotesk', sans-serif; text-align: right; }
+.range-value-input.years { width: 44px; }
+.range-value-input:focus { border-color: var(--mint); box-shadow: 0 0 0 3px rgba(124,247,201,.1); }
+.range-value-input::-webkit-inner-spin-button, .range-value-input::-webkit-outer-spin-button { margin-left: 2px; }
 .range-field input[type='range'] { height: 18px; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; accent-color: var(--mint); cursor: pointer; }
 .range-field input[type='range']::-webkit-slider-runnable-track { height: 4px; border-radius: 99px; background: #28334d; }
 .range-field input[type='range']::-webkit-slider-thumb { width: 18px; height: 18px; margin-top: -7px; border: 3px solid #0e1526; border-radius: 50%; background: var(--mint); box-shadow: 0 0 0 1px var(--mint); appearance: none; -webkit-appearance: none; }
@@ -200,8 +204,8 @@ a.app-card:hover { transform: translateY(-4px); border-color: rgba(124,247,201,.
 .legend-line { width: 19px; height: 3px; border-radius: 99px; }
 .legend-line.invested { background: var(--violet); }
 .legend-line.portfolio { background: var(--mint); }
-.chart-stage { position: relative; width: 100%; touch-action: pan-y; }
-.investment-chart { display: block; width: 100%; height: auto; min-height: 270px; overflow: visible; }
+.chart-stage { position: relative; width: 100%; touch-action: pan-y; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+.investment-chart { display: block; width: 100%; height: auto; min-height: 270px; overflow: visible; -webkit-user-drag: none; }
 .chart-grid { stroke: rgba(145,159,194,.15); stroke-width: 1; }
 .chart-axis-label { fill: #74809e; font: 500 11px 'DM Sans', sans-serif; }
 .chart-area { fill: url(#portfolio-area); }

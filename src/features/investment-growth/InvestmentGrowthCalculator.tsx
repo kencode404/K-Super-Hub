@@ -80,6 +80,7 @@ function InvestmentChart({ projection, currency }: { projection: InvestmentProje
           onPointerMove={(event) => updateActivePoint(event.clientX, event.currentTarget)}
           onPointerLeave={() => setActiveIndex(null)}
           onPointerDown={(event) => updateActivePoint(event.clientX, event.currentTarget)}
+          onContextMenu={(event) => event.preventDefault()}
         >
           <title id="growth-chart-title">Projected investment growth</title>
           <desc id="growth-chart-description">A line chart comparing invested principal with projected portfolio value over time.</desc>
@@ -150,7 +151,7 @@ async function renderPerformanceSnapshot(node: HTMLElement, projection: Investme
     <defs><linearGradient id="bg" x1="0" x2="1"><stop stop-color="#080c19"/><stop offset="1" stop-color="#121a32"/></linearGradient></defs>
     <style>.title{font:700 48px system-ui,sans-serif;fill:#eff3ff}.subtitle{font:500 20px system-ui,sans-serif;fill:#9ca8c7}.label{font:700 14px system-ui,sans-serif;letter-spacing:2px;fill:#9ca8c7}.value{font:700 30px system-ui,sans-serif;fill:#eff3ff}.axis{font:500 14px system-ui,sans-serif;fill:#7e8aa9}.footer{font:600 15px system-ui,sans-serif;fill:#9ca8c7}</style>
     <rect width="1200" height="780" fill="url(#bg)"/><circle cx="1080" cy="40" r="210" fill="#a994ff" opacity=".08"/><circle cx="0" cy="740" r="230" fill="#7cf7c9" opacity=".06"/>
-    <text x="68" y="82" class="title">${escapeXml(title)}</text><text x="68" y="123" class="subtitle">${targetXirr.toFixed(1)}% target XIRR · ${years} years · ${dateLabel(projection.points[0].date)} to ${dateLabel(projection.points.at(-1)!.date)}</text>
+    <text x="68" y="82" class="title">${escapeXml(title)}</text><text x="68" y="123" class="subtitle">${targetXirr.toFixed(1)}% Target Returns (XIRR) · ${years} years · ${dateLabel(projection.points[0].date)} to ${dateLabel(projection.points.at(-1)!.date)}</text>
     ${summaryCards}<rect x="44" y="332" width="1112" height="382" rx="26" fill="#0d1426" stroke="#28334d"/>${yGrid}
     <path d="${translatePath('invested')}" fill="none" stroke="#a994ff" stroke-width="6" stroke-linecap="round"/><path d="${translatePath('portfolio')}" fill="none" stroke="#7cf7c9" stroke-width="7" stroke-linecap="round"/>
     <circle cx="72" cy="744" r="6" fill="#a994ff"/><text x="88" y="750" class="footer">Invested principal</text><circle cx="268" cy="744" r="6" fill="#7cf7c9"/><text x="284" y="750" class="footer">Portfolio value</text><text x="1132" y="750" text-anchor="end" class="footer">K-SuperHub</text>
@@ -188,11 +189,40 @@ export function InvestmentGrowthCalculator({ session, onBack, onSignOut }: { ses
   const [monthlyContribution, setMonthlyContribution] = useState(1_000)
   const [targetXirr, setTargetXirr] = useState(8)
   const [years, setYears] = useState(10)
+  const [initialValueInput, setInitialValueInput] = useState('10000')
+  const [monthlyContributionInput, setMonthlyContributionInput] = useState('1000')
+  const [targetXirrInput, setTargetXirrInput] = useState('8')
+  const [yearsInput, setYearsInput] = useState('10')
   const [currency, setCurrency] = useState<CurrencyCode>('MYR')
   const [shareState, setShareState] = useState<'idle' | 'rendering' | 'shared' | 'downloaded' | 'error'>('idle')
   const snapshotRef = useRef<HTMLDivElement>(null)
   const projection = useMemo(() => createInvestmentProjection({ initialValue, monthlyContribution, targetXirrPercent: targetXirr, years }), [initialValue, monthlyContribution, targetXirr, years])
   const money = useMemo(() => currencyFormatter(currency), [currency])
+
+  function updateMoneyInput(value: string, setInput: (next: string) => void, setAmount: (next: number) => void) {
+    setInput(value)
+    const amount = Number(value)
+    if (value !== '' && Number.isFinite(amount) && amount >= 0) setAmount(amount)
+  }
+
+  function restoreMoneyInput(value: string, setInput: (next: string) => void, setAmount: (next: number) => void) {
+    if (value === '') {
+      setInput('0')
+      setAmount(0)
+    }
+  }
+
+  function updateTargetXirr(value: string) {
+    setTargetXirrInput(value)
+    const rate = Number(value)
+    if (value !== '' && Number.isFinite(rate) && rate >= 0 && rate <= 1000) setTargetXirr(rate)
+  }
+
+  function updateYears(value: string) {
+    setYearsInput(value)
+    const horizon = Number(value)
+    if (value !== '' && Number.isInteger(horizon) && horizon >= 1 && horizon <= 100) setYears(horizon)
+  }
 
   async function shareSnapshot() {
     if (!snapshotRef.current || shareState === 'rendering') return
@@ -226,28 +256,28 @@ export function InvestmentGrowthCalculator({ session, onBack, onSignOut }: { ses
       </header>
 
       <section className="tool-intro">
-        <div><p className="eyebrow">Tools · Investment planning</p><h1>Growth, mapped<br /><span>to the day.</span></h1><p>Set an annual XIRR target and see the terminal value required for every dated cash flow to balance precisely.</p></div>
+        <div><p className="eyebrow">Tools · Investment planning</p><h1>Growth, mapped<br /><span>to the day.</span></h1><p>Set a target return (XIRR) and see the terminal value required for every dated cash flow to balance precisely.</p></div>
         <div className="method-chip"><Sparkle /><span><strong>Date-accurate projection</strong><small>Actual calendar dates · 365.2425-day basis</small></span></div>
       </section>
 
       <section className="calculator-layout">
         <aside className="calculator-controls" aria-labelledby="assumptions-title">
           <div className="control-heading"><div><p className="eyebrow">Your assumptions</p><h2 id="assumptions-title">Build the plan</h2></div><Wallet /></div>
-          <label className="field"><span>Initial value</span><div className="money-input"><b>{currency}</b><input type="number" min="0" step="500" inputMode="decimal" value={initialValue} onChange={(event) => setInitialValue(Math.max(0, Number(event.target.value)))} /></div></label>
-          <label className="field"><span>Monthly contribution</span><div className="money-input"><b>{currency}</b><input type="number" min="0" step="100" inputMode="decimal" value={monthlyContribution} onChange={(event) => setMonthlyContribution(Math.max(0, Number(event.target.value)))} /></div></label>
-          <label className="field range-field"><span><i>Target annual XIRR</i><output>{targetXirr.toFixed(1)}%</output></span><input type="range" min="0" max="30" step="0.1" value={targetXirr} onChange={(event) => setTargetXirr(Number(event.target.value))} /></label>
-          <label className="field range-field"><span><i>Investment horizon</i><output>{years} years</output></span><input type="range" min="1" max="40" step="1" value={years} onChange={(event) => setYears(Number(event.target.value))} /></label>
+          <label className="field"><span>Initial value</span><div className="money-input"><b>{currency}</b><input type="number" min="0" step="500" inputMode="decimal" value={initialValueInput} onChange={(event) => updateMoneyInput(event.target.value, setInitialValueInput, setInitialValue)} onBlur={() => restoreMoneyInput(initialValueInput, setInitialValueInput, setInitialValue)} /></div></label>
+          <label className="field"><span>Monthly contribution</span><div className="money-input"><b>{currency}</b><input type="number" min="0" step="100" inputMode="decimal" value={monthlyContributionInput} onChange={(event) => updateMoneyInput(event.target.value, setMonthlyContributionInput, setMonthlyContribution)} onBlur={() => restoreMoneyInput(monthlyContributionInput, setMonthlyContributionInput, setMonthlyContribution)} /></div></label>
+          <label className="field range-field"><span><i>Target Returns (XIRR)</i><span className="range-value"><input className="range-value-input" type="number" min="0" max="1000" step="0.1" inputMode="decimal" value={targetXirrInput} onChange={(event) => updateTargetXirr(event.target.value)} onBlur={() => { if (targetXirrInput === '') { setTargetXirrInput('0'); setTargetXirr(0) } }} /><b>%</b></span></span><input type="range" min="0" max="30" step="0.1" value={Math.min(30, targetXirr)} onChange={(event) => { const value = event.target.value; setTargetXirrInput(value); setTargetXirr(Number(value)) }} /></label>
+          <label className="field range-field"><span><i>Investment horizon</i><span className="range-value"><input className="range-value-input years" type="number" min="1" max="100" step="1" inputMode="numeric" value={yearsInput} onChange={(event) => updateYears(event.target.value)} onBlur={() => { if (yearsInput === '') { setYearsInput('1'); setYears(1) } }} /><b>years</b></span></span><input type="range" min="1" max="40" step="1" value={Math.min(40, years)} onChange={(event) => { const value = event.target.value; setYearsInput(value); setYears(Number(value)) }} /></label>
           <label className="field"><span>Display currency</span><select value={currency} onChange={(event) => setCurrency(event.target.value as CurrencyCode)}>{(['MYR', 'USD', 'SGD', 'EUR', 'GBP'] as const).map((code) => <option key={code}>{code}</option>)}</select></label>
           <div className="calendar-note"><CalendarBlank /><p>Contributions land monthly on today’s calendar day. Short months use their final valid day.</p></div>
         </aside>
 
         <div className="calculator-results" ref={snapshotRef} data-snapshot-title="Investment growth projection">
-          <div className="result-heading"><div><p className="eyebrow">Target outcome</p><h2>{money.format(projection.finalValue)}</h2><p>Projected portfolio value after {years} {years === 1 ? 'year' : 'years'}</p></div><div className="gain-badge"><TrendUp /><span><small>Wealth gain</small><strong>+{money.format(projection.totalGrowth)}</strong></span></div></div>
+          <div className="result-heading"><div><p className="eyebrow">Target Returns (XIRR)</p><h2>{money.format(projection.finalValue)}</h2><p>Projected portfolio value after {years} {years === 1 ? 'year' : 'years'}</p></div><div className="gain-badge"><TrendUp /><span><small>Wealth gain</small><strong>+{money.format(projection.totalGrowth)}</strong></span></div></div>
           <div className="summary-grid">
             <article><small>Initial value</small><strong>{money.format(initialValue)}</strong></article>
             <article><small>Monthly</small><strong>{money.format(monthlyContribution)}</strong></article>
             <article><small>Total invested</small><strong>{money.format(projection.totalInvested)}</strong></article>
-            <article><small>Target XIRR</small><strong>{targetXirr.toFixed(1)}%</strong></article>
+            <article><small>Target Returns (XIRR)</small><strong>{targetXirr.toFixed(1)}%</strong></article>
           </div>
           <InvestmentChart projection={projection} currency={currency} />
           <div className="result-footer">
