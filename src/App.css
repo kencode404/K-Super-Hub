@@ -207,7 +207,7 @@ a.app-card:hover { transform: translateY(-4px); border-color: rgba(124,247,201,.
 .chart-stage { position: relative; width: 100%; touch-action: pan-y; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
 .investment-chart { display: block; width: 100%; height: auto; min-height: 270px; overflow: visible; -webkit-user-drag: none; }
 .chart-grid { stroke: rgba(145,159,194,.15); stroke-width: 1; }
-.chart-axis-label { fill: #74809e; font: 500 11px 'DM Sans', sans-serif; }
+.chart-axis-label { fill: #74809e; font: 500 16.5px 'DM Sans', sans-serif; }
 .chart-area { fill: url(#portfolio-area); }
 .chart-line { fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
 .chart-invested { stroke: var(--violet); }
@@ -274,7 +274,7 @@ a.app-card:hover { transform: translateY(-4px); border-color: rgba(124,247,201,.
   .tool-shell { padding-inline: 14px; }
   .tool-intro h1 { font-size: 42px; }
   .calculator-results { padding: 19px 14px; }
-  .chart-axis-label { font-size: 9px; }
+  .chart-axis-label { font-size: 13.5px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
