@@ -1,5 +1,6 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
+  ArrowsClockwise,
   ArrowLeft,
   CalendarBlank,
   CheckCircle,
@@ -11,9 +12,16 @@ import {
   Wallet,
 } from '@phosphor-icons/react'
 import type { Session } from '@supabase/supabase-js'
+import { supabase } from '../../lib/supabase'
 import { createInvestmentProjection, type InvestmentProjection, type ProjectionPoint } from './math'
 
 type CurrencyCode = 'MYR' | 'USD' | 'SGD' | 'EUR' | 'GBP'
+
+type WorthDeltaValues = {
+  assets: number
+  liquidity: number
+  period: string
+}
 
 const CHART = { width: 900, height: 390, left: 78, right: 22, top: 30, bottom: 54 }
 const COLORS = { background: '#0b1020', panel: '#11182b', grid: '#33405f', text: '#eff3ff', muted: '#9ca8c7', mint: '#7cf7c9', violet: '#a994ff' }
@@ -31,6 +39,11 @@ function dateLabel(date: Date, full = false) {
   return new Intl.DateTimeFormat(undefined, full
     ? { day: 'numeric', month: 'short', year: 'numeric' }
     : { month: 'short', year: 'numeric' }).format(date)
+}
+
+function currentMonthPeriod() {
+  const now = new Date()
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
 }
 
 function chartGeometry(points: readonly ProjectionPoint[]) {
@@ -195,9 +208,47 @@ export function InvestmentGrowthCalculator({ session, onBack, onSignOut }: { ses
   const [yearsInput, setYearsInput] = useState('10')
   const [currency, setCurrency] = useState<CurrencyCode>('MYR')
   const [shareState, setShareState] = useState<'idle' | 'rendering' | 'shared' | 'downloaded' | 'error'>('idle')
+  const [worthDeltaValues, setWorthDeltaValues] = useState<WorthDeltaValues | null>(null)
+  const [worthDeltaStatus, setWorthDeltaStatus] = useState<'loading' | 'ready' | 'unavailable'>('loading')
   const snapshotRef = useRef<HTMLDivElement>(null)
   const projection = useMemo(() => createInvestmentProjection({ initialValue, monthlyContribution, targetXirrPercent: targetXirr, years }), [initialValue, monthlyContribution, targetXirr, years])
   const money = useMemo(() => currencyFormatter(currency), [currency])
+
+  async function loadWorthDeltaValues() {
+    const period = currentMonthPeriod()
+    setWorthDeltaStatus('loading')
+    const [categoriesResult, groupsResult, recordsResult] = await Promise.all([
+      supabase.from('worthdelta_financial_categories').select('id, expense_group_id').eq('user_id', session.user.id).eq('category_type', 'asset').is('archived_at', null),
+      supabase.from('worthdelta_expense_groups').select('id, sort_order').eq('user_id', session.user.id).eq('category_type', 'asset').order('sort_order'),
+      supabase.from('worthdelta_monthly_records').select('category_id, amount').eq('user_id', session.user.id).eq('period', period),
+    ])
+
+    if (categoriesResult.error || groupsResult.error || recordsResult.error) {
+      setWorthDeltaValues(null)
+      setWorthDeltaStatus('unavailable')
+      return
+    }
+
+    const assetCategories = categoriesResult.data ?? []
+    const assetIds = new Set(assetCategories.map((category) => category.id))
+    const nonCurrentGroupIds = new Set((groupsResult.data ?? []).slice(1).map((group) => group.id))
+    const categoryGroupIds = new Map(assetCategories.map((category) => [category.id, category.expense_group_id]))
+    const assetRecords = (recordsResult.data ?? []).filter((record) => assetIds.has(record.category_id))
+    const assets = assetRecords.reduce((sum, record) => sum + Number(record.amount), 0)
+    const liquidity = assetRecords
+      .filter((record) => !nonCurrentGroupIds.has(categoryGroupIds.get(record.category_id) ?? ''))
+      .reduce((sum, record) => sum + Number(record.amount), 0)
+
+    setWorthDeltaValues({ assets, liquidity, period })
+    setWorthDeltaStatus('ready')
+  }
+
+  useEffect(() => {
+    void loadWorthDeltaValues()
+  // Loading is intentionally tied to the signed-in user only; the refresh
+  // action covers data entered in WorthDelta while this screen is open.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session.user.id])
 
   function updateMoneyInput(value: string, setInput: (next: string) => void, setAmount: (next: number) => void) {
     setInput(value)
@@ -210,6 +261,12 @@ export function InvestmentGrowthCalculator({ session, onBack, onSignOut }: { ses
       setInput('0')
       setAmount(0)
     }
+  }
+
+  function applyWorthDeltaValue(value: number) {
+    const rounded = Math.round(value * 100) / 100
+    setInitialValue(rounded)
+    setInitialValueInput(String(rounded))
   }
 
   function updateTargetXirr(value: string) {
@@ -264,6 +321,10 @@ export function InvestmentGrowthCalculator({ session, onBack, onSignOut }: { ses
         <aside className="calculator-controls" aria-labelledby="assumptions-title">
           <div className="control-heading"><div><p className="eyebrow">Your assumptions</p><h2 id="assumptions-title">Build the plan</h2></div><Wallet /></div>
           <label className="field"><span>Initial value</span><div className="money-input"><b>{currency}</b><input type="number" min="0" step="500" inputMode="decimal" value={initialValueInput} onChange={(event) => updateMoneyInput(event.target.value, setInitialValueInput, setInitialValue)} onBlur={() => restoreMoneyInput(initialValueInput, setInitialValueInput, setInitialValue)} /></div></label>
+          <section className="worthdelta-source" aria-labelledby="worthdelta-source-title">
+            <div className="worthdelta-source-heading"><div><small>Or use WorthDelta</small><strong id="worthdelta-source-title">Current-month balance</strong></div><button type="button" onClick={() => void loadWorthDeltaValues()} disabled={worthDeltaStatus === 'loading'} aria-label="Refresh WorthDelta balance"><ArrowsClockwise className={worthDeltaStatus === 'loading' ? 'spin' : ''} /></button></div>
+            {worthDeltaStatus === 'ready' && worthDeltaValues ? <div className="worthdelta-options"><button type="button" onClick={() => applyWorthDeltaValue(worthDeltaValues.assets)}><span>Initial assets</span><strong>{money.format(worthDeltaValues.assets)}</strong></button><button type="button" onClick={() => applyWorthDeltaValue(worthDeltaValues.liquidity)}><span>Liquidity</span><strong>{money.format(worthDeltaValues.liquidity)}</strong></button><p>{new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' }).format(new Date(`${worthDeltaValues.period}T00:00:00`))}</p></div> : <p className="worthdelta-unavailable">{worthDeltaStatus === 'loading' ? 'Loading your current WorthDelta balances…' : 'No current-month WorthDelta balances are available. You can still enter an amount manually.'}</p>}
+          </section>
           <label className="field"><span>Monthly contribution</span><div className="money-input"><b>{currency}</b><input type="number" min="0" step="100" inputMode="decimal" value={monthlyContributionInput} onChange={(event) => updateMoneyInput(event.target.value, setMonthlyContributionInput, setMonthlyContribution)} onBlur={() => restoreMoneyInput(monthlyContributionInput, setMonthlyContributionInput, setMonthlyContribution)} /></div></label>
           <label className="field range-field"><span><i>Target Returns (XIRR)</i><span className="range-value"><input className="range-value-input" type="number" min="0" max="1000" step="0.1" inputMode="decimal" value={targetXirrInput} onChange={(event) => updateTargetXirr(event.target.value)} onBlur={() => { if (targetXirrInput === '') { setTargetXirrInput('0'); setTargetXirr(0) } }} /><b>%</b></span></span><input type="range" min="0" max="30" step="0.1" value={Math.min(30, targetXirr)} onChange={(event) => { const value = event.target.value; setTargetXirrInput(value); setTargetXirr(Number(value)) }} /></label>
           <label className="field range-field"><span><i>Investment horizon</i><span className="range-value"><input className="range-value-input years" type="number" min="1" max="100" step="1" inputMode="numeric" value={yearsInput} onChange={(event) => updateYears(event.target.value)} onBlur={() => { if (yearsInput === '') { setYearsInput('1'); setYears(1) } }} /><b>years</b></span></span><input type="range" min="1" max="40" step="1" value={Math.min(40, years)} onChange={(event) => { const value = event.target.value; setYearsInput(value); setYears(Number(value)) }} /></label>

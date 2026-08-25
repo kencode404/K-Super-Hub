@@ -168,6 +168,20 @@ a.app-card:hover { transform: translateY(-4px); border-color: rgba(124,247,201,.
 .money-input b { display: grid; place-items: center; align-self: stretch; min-width: 56px; border-right: 1px solid #252f48; color: var(--mint); background: rgba(124,247,201,.045); font-size: 10px; letter-spacing: .08em; }
 .money-input input { height: 46px; padding: 0 13px; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
 .money-input input:focus { box-shadow: none; }
+.worthdelta-source { display: grid; gap: 10px; margin-top: -12px; padding: 13px; border: 1px solid rgba(169,148,255,.16); border-radius: 13px; background: rgba(169,148,255,.045); }
+.worthdelta-source-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.worthdelta-source-heading > div { display: grid; }
+.worthdelta-source-heading small { color: #8e99b5; font-size: 9px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.worthdelta-source-heading strong { margin-top: 3px; color: #dce3f8; font-size: 11px; }
+.worthdelta-source-heading button { display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 1px solid rgba(169,148,255,.24); border-radius: 8px; color: var(--violet); background: rgba(169,148,255,.07); cursor: pointer; }
+.worthdelta-source-heading button:disabled { cursor: wait; }
+.worthdelta-source-heading button svg { width: 15px; }
+.worthdelta-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+.worthdelta-options button { display: grid; gap: 4px; min-width: 0; padding: 10px; border: 1px solid rgba(169,148,255,.15); border-radius: 10px; color: #eff3ff; background: rgba(7,11,24,.44); cursor: pointer; text-align: left; transition: border-color .18s, background .18s, transform .18s; }
+.worthdelta-options button:hover { border-color: rgba(124,247,201,.38); background: rgba(124,247,201,.06); transform: translateY(-1px); }
+.worthdelta-options button span { overflow: hidden; color: #8c98b4; font-size: 9px; font-weight: 700; letter-spacing: .05em; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
+.worthdelta-options button strong { overflow: hidden; color: var(--mint); font: 600 13px 'Space Grotesk', sans-serif; text-overflow: ellipsis; white-space: nowrap; }
+.worthdelta-options p, .worthdelta-unavailable { grid-column: 1 / -1; margin: 1px 0 0; color: #7f8ca8; font-size: 9px; line-height: 1.45; }
 .range-field > span { display: flex; align-items: center; justify-content: space-between; }
 .range-field i { font-style: normal; }
 .range-value { display: inline-flex; align-items: center; gap: 4px; color: var(--mint); font: 700 12px 'Space Grotesk', sans-serif; }
