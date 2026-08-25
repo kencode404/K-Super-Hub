@@ -6,6 +6,7 @@ import {
   CheckCircle,
   DownloadSimple,
   Info,
+  LockKey,
   ShareNetwork,
   Sparkle,
   TrendUp,
@@ -21,6 +22,11 @@ type WorthDeltaValues = {
   assets: number
   liquidity: number
   period: string
+}
+
+type WorthDeltaPin = {
+  salt: string
+  hash: string
 }
 
 const CHART = { width: 900, height: 390, left: 78, right: 22, top: 30, bottom: 54 }
@@ -44,6 +50,21 @@ function dateLabel(date: Date, full = false) {
 function currentMonthPeriod() {
   const now = new Date()
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
+}
+
+function parseWorthDeltaPin(value: unknown): WorthDeltaPin | null {
+  if (typeof value !== 'string') return null
+  try {
+    const parsed = JSON.parse(value) as WorthDeltaPin
+    return typeof parsed.salt === 'string' && typeof parsed.hash === 'string' ? parsed : null
+  } catch {
+    return null
+  }
+}
+
+async function hashWorthDeltaPin(pin: string, salt: string) {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`${salt}:${pin}`))
+  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('')
 }
 
 function chartGeometry(points: readonly ProjectionPoint[]) {
@@ -209,7 +230,12 @@ export function InvestmentGrowthCalculator({ session, onBack, onSignOut }: { ses
   const [currency, setCurrency] = useState<CurrencyCode>('MYR')
   const [shareState, setShareState] = useState<'idle' | 'rendering' | 'shared' | 'downloaded' | 'error'>('idle')
   const [worthDeltaValues, setWorthDeltaValues] = useState<WorthDeltaValues | null>(null)
-  const [worthDeltaStatus, setWorthDeltaStatus] = useState<'loading' | 'ready' | 'unavailable'>('loading')
+  const [worthDeltaStatus, setWorthDeltaStatus] = useState<'idle' | 'loading' | 'ready' | 'unavailable'>('idle')
+  const [worthDeltaLock, setWorthDeltaLock] = useState<'checking' | 'required' | 'unlocked' | 'not-configured' | 'unavailable'>('checking')
+  const [worthDeltaPin, setWorthDeltaPin] = useState<WorthDeltaPin | null>(null)
+  const [worthDeltaPinInput, setWorthDeltaPinInput] = useState('')
+  const [worthDeltaPinError, setWorthDeltaPinError] = useState('')
+  const [verifyingWorthDeltaPin, setVerifyingWorthDeltaPin] = useState(false)
   const snapshotRef = useRef<HTMLDivElement>(null)
   const projection = useMemo(() => createInvestmentProjection({ initialValue, monthlyContribution, targetXirrPercent: targetXirr, years }), [initialValue, monthlyContribution, targetXirr, years])
   const money = useMemo(() => currencyFormatter(currency), [currency])
@@ -244,10 +270,25 @@ export function InvestmentGrowthCalculator({ session, onBack, onSignOut }: { ses
   }
 
   useEffect(() => {
-    void loadWorthDeltaValues()
-  // Loading is intentionally tied to the signed-in user only; the refresh
-  // action covers data entered in WorthDelta while this screen is open.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    let active = true
+    async function checkWorthDeltaLock() {
+      setWorthDeltaLock('checking')
+      const { data, error } = await supabase
+        .from('worthdelta_profiles')
+        .select('lock_pin')
+        .eq('id', session.user.id)
+        .maybeSingle()
+      if (!active) return
+      if (error) {
+        setWorthDeltaLock('unavailable')
+        return
+      }
+      const pin = parseWorthDeltaPin(data?.lock_pin)
+      setWorthDeltaPin(pin)
+      setWorthDeltaLock(pin ? 'required' : 'not-configured')
+    }
+    void checkWorthDeltaLock()
+    return () => { active = false }
   }, [session.user.id])
 
   function updateMoneyInput(value: string, setInput: (next: string) => void, setAmount: (next: number) => void) {
@@ -267,6 +308,30 @@ export function InvestmentGrowthCalculator({ session, onBack, onSignOut }: { ses
     const rounded = Math.round(value * 100) / 100
     setInitialValue(rounded)
     setInitialValueInput(String(rounded))
+  }
+
+  async function unlockWorthDelta(event: React.FormEvent) {
+    event.preventDefault()
+    if (!worthDeltaPin || !/^\d{4}$/.test(worthDeltaPinInput)) {
+      setWorthDeltaPinError('Enter your four-digit WorthDelta PIN.')
+      return
+    }
+    setVerifyingWorthDeltaPin(true)
+    setWorthDeltaPinError('')
+    try {
+      const matches = await hashWorthDeltaPin(worthDeltaPinInput, worthDeltaPin.salt) === worthDeltaPin.hash
+      if (!matches) {
+        setWorthDeltaPinError('That PIN does not match WorthDelta.')
+        return
+      }
+      setWorthDeltaPinInput('')
+      setWorthDeltaLock('unlocked')
+      await loadWorthDeltaValues()
+    } catch {
+      setWorthDeltaPinError('PIN verification is unavailable on this device.')
+    } finally {
+      setVerifyingWorthDeltaPin(false)
+    }
   }
 
   function updateTargetXirr(value: string) {
@@ -322,8 +387,12 @@ export function InvestmentGrowthCalculator({ session, onBack, onSignOut }: { ses
           <div className="control-heading"><div><p className="eyebrow">Your assumptions</p><h2 id="assumptions-title">Build the plan</h2></div><Wallet /></div>
           <label className="field"><span>Initial value</span><div className="money-input"><b>{currency}</b><input type="number" min="0" step="500" inputMode="decimal" value={initialValueInput} onChange={(event) => updateMoneyInput(event.target.value, setInitialValueInput, setInitialValue)} onBlur={() => restoreMoneyInput(initialValueInput, setInitialValueInput, setInitialValue)} /></div></label>
           <section className="worthdelta-source" aria-labelledby="worthdelta-source-title">
-            <div className="worthdelta-source-heading"><div><small>Or use WorthDelta</small><strong id="worthdelta-source-title">Current-month balance</strong></div><button type="button" onClick={() => void loadWorthDeltaValues()} disabled={worthDeltaStatus === 'loading'} aria-label="Refresh WorthDelta balance"><ArrowsClockwise className={worthDeltaStatus === 'loading' ? 'spin' : ''} /></button></div>
-            {worthDeltaStatus === 'ready' && worthDeltaValues ? <div className="worthdelta-options"><button type="button" onClick={() => applyWorthDeltaValue(worthDeltaValues.assets)}><span>Initial assets</span><strong>{money.format(worthDeltaValues.assets)}</strong></button><button type="button" onClick={() => applyWorthDeltaValue(worthDeltaValues.liquidity)}><span>Liquidity</span><strong>{money.format(worthDeltaValues.liquidity)}</strong></button><p>{new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' }).format(new Date(`${worthDeltaValues.period}T00:00:00`))}</p></div> : <p className="worthdelta-unavailable">{worthDeltaStatus === 'loading' ? 'Loading your current WorthDelta balances…' : 'No current-month WorthDelta balances are available. You can still enter an amount manually.'}</p>}
+            <div className="worthdelta-source-heading"><div><small>Or use WorthDelta</small><strong id="worthdelta-source-title">Current-month balance</strong></div>{worthDeltaLock === 'unlocked' && <button type="button" onClick={() => void loadWorthDeltaValues()} disabled={worthDeltaStatus === 'loading'} aria-label="Refresh WorthDelta balance"><ArrowsClockwise className={worthDeltaStatus === 'loading' ? 'spin' : ''} /></button>}</div>
+            {worthDeltaLock === 'checking' && <p className="worthdelta-unavailable">Checking WorthDelta app lock…</p>}
+            {worthDeltaLock === 'required' && <form className="worthdelta-pin-form" onSubmit={unlockWorthDelta}><p><LockKey />Enter your WorthDelta PIN to reveal these balances.</p><div><input aria-label="WorthDelta PIN" type="password" inputMode="numeric" autoComplete="off" pattern="[0-9]*" maxLength={4} value={worthDeltaPinInput} onChange={(event) => { setWorthDeltaPinInput(event.target.value.replace(/\D/g, '').slice(0, 4)); setWorthDeltaPinError('') }} /><button type="submit" disabled={verifyingWorthDeltaPin}>{verifyingWorthDeltaPin ? 'Checking…' : 'Reveal'}</button></div>{worthDeltaPinError && <small role="alert">{worthDeltaPinError}</small>}</form>}
+            {worthDeltaLock === 'not-configured' && <p className="worthdelta-unavailable"><LockKey />Set a four-digit PIN in WorthDelta’s App Lock before you can reveal balances here.</p>}
+            {worthDeltaLock === 'unavailable' && <p className="worthdelta-unavailable">WorthDelta’s app lock could not be checked. Balances remain hidden.</p>}
+            {worthDeltaLock === 'unlocked' && (worthDeltaStatus === 'ready' && worthDeltaValues ? <div className="worthdelta-options"><button type="button" onClick={() => applyWorthDeltaValue(worthDeltaValues.assets)}><span>Initial assets</span><strong>{money.format(worthDeltaValues.assets)}</strong></button><button type="button" onClick={() => applyWorthDeltaValue(worthDeltaValues.liquidity)}><span>Liquidity</span><strong>{money.format(worthDeltaValues.liquidity)}</strong></button><p>{new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' }).format(new Date(`${worthDeltaValues.period}T00:00:00`))}</p></div> : <p className="worthdelta-unavailable">{worthDeltaStatus === 'loading' ? 'Loading your current WorthDelta balances…' : 'No current-month WorthDelta balances are available. You can still enter an amount manually.'}</p>)}
           </section>
           <label className="field"><span>Monthly contribution</span><div className="money-input"><b>{currency}</b><input type="number" min="0" step="100" inputMode="decimal" value={monthlyContributionInput} onChange={(event) => updateMoneyInput(event.target.value, setMonthlyContributionInput, setMonthlyContribution)} onBlur={() => restoreMoneyInput(monthlyContributionInput, setMonthlyContributionInput, setMonthlyContribution)} /></div></label>
           <label className="field range-field"><span><i>Target Returns (XIRR)</i><span className="range-value"><input className="range-value-input" type="number" min="0" max="1000" step="0.1" inputMode="decimal" value={targetXirrInput} onChange={(event) => updateTargetXirr(event.target.value)} onBlur={() => { if (targetXirrInput === '') { setTargetXirrInput('0'); setTargetXirr(0) } }} /><b>%</b></span></span><input type="range" min="0" max="30" step="0.1" value={Math.min(30, targetXirr)} onChange={(event) => { const value = event.target.value; setTargetXirrInput(value); setTargetXirr(Number(value)) }} /></label>
