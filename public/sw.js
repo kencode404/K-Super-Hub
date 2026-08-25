@@ -1,4 +1,4 @@
-const CACHE_NAME = 'k-super-hub-v1'
+const CACHE_NAME = 'k-super-hub-v2'
 const APP_SHELL = [
   '/K-Super-Hub/',
   '/K-Super-Hub/manifest.webmanifest',

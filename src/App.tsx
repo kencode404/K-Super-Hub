@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import {
   ArrowRight,
+  Calculator,
   CheckCircle,
   ChartLineUp,
   LockKey,
@@ -11,6 +12,7 @@ import {
   WarningCircle,
 } from '@phosphor-icons/react'
 import { supabase } from './lib/supabase'
+import { InvestmentGrowthCalculator } from './features/investment-growth/InvestmentGrowthCalculator'
 
 type AuthMode = 'login' | 'signup'
 
@@ -28,6 +30,16 @@ const apps = [
     icon: ChartLineUp,
     image: `${import.meta.env.BASE_URL}worthdelta-icon.png`,
     accent: 'lime',
+  },
+] as const
+
+const tools = [
+  {
+    name: 'Investment Growth',
+    description: 'Map a target XIRR into a date-accurate wealth projection.',
+    eyebrow: 'XIRR calculator',
+    hash: '#tools/investment-growth',
+    icon: Calculator,
   },
 ] as const
 
@@ -209,13 +221,14 @@ function HubDashboard({ session }: { session: Session }) {
     <main className="hub-shell">
       <header className="hub-header">
         <Brand />
+        <nav className="hub-nav" aria-label="Hub collections"><a href="#apps">Apps</a><a href="#tools">Tools</a></nav>
         <div className="hub-user"><span className="avatar">{displayName[0].toUpperCase()}</span><span><strong>{displayName}</strong><small>{session.user.email}</small></span><button type="button" onClick={() => void supabase.auth.signOut({ scope: 'local' })}><SignOut />Sign out</button></div>
       </header>
       <section className="hub-hero">
         <div><p className="eyebrow">Command center</p><h1>Good to see you, {displayName}.</h1><p>Your connected apps are ready. One account keeps the doors open.</p></div>
         <div className="hub-pulse" aria-hidden="true"><span><img src={HUB_ICON} alt="" /></span></div>
       </section>
-      <section className="apps-section" aria-labelledby="apps-title">
+      <section className="apps-section" id="apps" aria-labelledby="apps-title">
         <div className="section-heading"><div><p className="eyebrow">Your collection</p><h2 id="apps-title">Connected apps</h2></div><span>{apps.length} live</span></div>
         <div className="app-grid">
           {apps.map((app) => {
@@ -225,6 +238,15 @@ function HubDashboard({ session }: { session: Session }) {
           <article className="app-card coming-soon"><span className="app-icon"><Sparkle /></span><span className="app-copy"><small>Next workspace</small><strong>More to come</strong><p>Your future apps will appear here.</p></span></article>
         </div>
       </section>
+      <section className="tools-section" id="tools" aria-labelledby="tools-title">
+        <div className="section-heading"><div><p className="eyebrow">Useful by design</p><h2 id="tools-title">Financial tools</h2></div><span>{tools.length} live</span></div>
+        <div className="tool-grid">
+          {tools.map((tool) => {
+            const Icon = tool.icon
+            return <a className="tool-card" href={tool.hash} key={tool.hash}><span className="tool-card-icon"><Icon /></span><span className="app-copy"><small>{tool.eyebrow}</small><strong>{tool.name}</strong><p>{tool.description}</p></span><span className="app-arrow"><ArrowRight /></span></a>
+          })}
+        </div>
+      </section>
     </main>
   )
 }
@@ -232,6 +254,13 @@ function HubDashboard({ session }: { session: Session }) {
 function App() {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
+  const [route, setRoute] = useState(window.location.hash)
+
+  useEffect(() => {
+    const handleRouteChange = () => setRoute(window.location.hash)
+    window.addEventListener('hashchange', handleRouteChange)
+    return () => window.removeEventListener('hashchange', handleRouteChange)
+  }, [])
 
   useEffect(() => {
     let active = true
@@ -272,7 +301,11 @@ function App() {
   }, [session])
 
   if (loading) return <main className="boot-screen"><span className="brand-mark brand-image-mark" aria-hidden="true"><img src={HUB_ICON} alt="" /></span><SpinnerGap className="spin" aria-label="Loading K-SuperHub" /></main>
-  return session ? <HubDashboard session={session} /> : <AuthScreen onSession={setSession} />
+  if (!session) return <AuthScreen onSession={setSession} />
+  if (route === '#tools/investment-growth') {
+    return <InvestmentGrowthCalculator session={session} onBack={() => { window.location.hash = ''; setRoute('') }} onSignOut={() => void supabase.auth.signOut({ scope: 'local' })} />
+  }
+  return <HubDashboard session={session} />
 }
 
 export default App
