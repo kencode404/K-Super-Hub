@@ -378,7 +378,7 @@ export function InvestmentGrowthCalculator({ session, onBack, onSignOut }: { ses
       </header>
 
       <section className="tool-intro">
-        <div><p className="eyebrow">Tools · Investment planning</p><h1>Growth, mapped<br /><span>to the day.</span></h1><p>Set a target return (XIRR) and see the terminal value required for every dated cash flow to balance precisely.</p></div>
+        <div><p className="eyebrow">Tools · Investment planning</p><h1>Growth, mapped<br /><span>to the day.</span></h1></div>
         <div className="method-chip"><Sparkle /><span><strong>Date-accurate projection</strong><small>Actual calendar dates · 365.2425-day basis</small></span></div>
       </section>
 

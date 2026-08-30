@@ -35,7 +35,7 @@ const apps = [
 
 const tools = [
   {
-    name: 'Investment Growth',
+    name: 'Growth Projection',
     description: 'Map a target XIRR into a date-accurate wealth projection.',
     eyebrow: 'XIRR calculator',
     hash: '#tools/investment-growth',
@@ -239,7 +239,7 @@ function HubDashboard({ session }: { session: Session }) {
         </div>
       </section>
       <section className="tools-section" id="tools" aria-labelledby="tools-title">
-        <div className="section-heading"><div><p className="eyebrow">Useful by design</p><h2 id="tools-title">Financial tools</h2></div><span>{tools.length} live</span></div>
+        <div className="section-heading"><div><p className="eyebrow">Useful by design</p><h2 id="tools-title">Tools</h2></div><span>{tools.length} live</span></div>
         <div className="tool-grid">
           {tools.map((tool) => {
             const Icon = tool.icon
