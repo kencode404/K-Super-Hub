@@ -30,22 +30,20 @@ falling back to the sign-in form.
 
 ## Off-origin apps
 
-Badminton ELO runs on Vercel, so it cannot read this origin's storage. Its
-card hands the current session over in the URL hash (`withSessionHandoff` in
-`src/App.tsx`), in the same shape as Supabase's implicit-flow redirect; the
-app reads it with `detectSessionInUrl` and lands the visitor signed in.
+Badminton ELO runs on Vercel, so it cannot read this origin's storage and
+cannot share the hub's session. It keeps its own Supabase session instead:
+same project, its own sign-in, its own refresh chain. Its card is a plain
+link that opens in a new tab.
 
-**This requires refresh token rotation to be OFF for the Supabase project**
-(dashboard, under Authentication -> Sessions on current projects, or Auth ->
-Settings on older ones). The handoff puts the same refresh token in two
-independently refreshing clients. With rotation on, whichever redeems it
-first invalidates it for the other, Supabase reads the second attempt as
-token reuse, and both apps get signed out. With rotation off the token stays
-redeemable and both clients can refresh from it.
+The first visit in a given browser signs in there once (one tap with Google,
+since it is the same Supabase project). After that the app persists its own
+session, so the card is a one-click landing.
 
-Trade-off worth knowing: the handed-over refresh token sits in the card's
-`href` and in the opened tab's history, and with rotation off it stays valid
-until sign-out. Copying that link copies working credentials.
+An earlier version handed the hub's session over in the URL hash. That put
+one refresh token into two independently refreshing clients: whichever
+redeemed it first invalidated it for the other, Supabase read the second
+attempt as token reuse, and both apps were signed out. Separate sessions
+avoid that without weakening refresh token rotation for the project.
 
 ## Local development
 
