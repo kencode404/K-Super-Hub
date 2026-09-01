@@ -2,10 +2,12 @@ import { useEffect, useMemo, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import {
   ArrowRight,
+  ArrowSquareOut,
   Calculator,
   CheckCircle,
   ChartLineUp,
   LockKey,
+  Racquet,
   SignOut,
   Sparkle,
   SpinnerGap,
@@ -30,6 +32,19 @@ const apps = [
     icon: ChartLineUp,
     image: `${import.meta.env.BASE_URL}worthdelta-icon.png`,
     accent: 'lime',
+    // Same origin as the hub, so it shares the signed-in session.
+    external: false,
+  },
+  {
+    name: 'Badminton ELO',
+    path: 'https://badminton-elo-rating.vercel.app/',
+    description: 'Rate every match. Rank every rival.',
+    eyebrow: 'Match ratings',
+    icon: Racquet,
+    image: null,
+    accent: 'violet',
+    // Hosted off-origin: opens in its own tab and cannot share the session.
+    external: true,
   },
 ] as const
 
@@ -48,7 +63,7 @@ function safeReturnPath(candidate: string | null) {
 
   try {
     const destination = new URL(candidate, window.location.origin)
-    const isKnownApp = apps.some((app) => destination.pathname.startsWith(app.path))
+    const isKnownApp = apps.some((app) => !app.external && destination.pathname.startsWith(app.path))
     if (destination.origin !== window.location.origin || !isKnownApp) return null
     return `${destination.pathname}${destination.search}${destination.hash}`
   } catch {
@@ -107,7 +122,7 @@ function AuthScreen({ onSession }: { onSession: (session: Session) => void }) {
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const returnPath = useMemo(() => requestedReturnPath(), [])
-  const returnApp = apps.find((app) => returnPath?.startsWith(app.path))
+  const returnApp = apps.find((app) => !app.external && returnPath?.startsWith(app.path))
 
   useEffect(() => {
     rememberReturnPath(returnPath)
@@ -233,7 +248,8 @@ function HubDashboard({ session }: { session: Session }) {
         <div className="app-grid">
           {apps.map((app) => {
             const Icon = app.icon
-            return <a className={`app-card ${app.accent}`} href={app.path} key={app.path}><span className="app-icon has-image"><img src={app.image} alt="" /><Icon className="fallback-icon" /></span><span className="app-copy"><small>{app.eyebrow}</small><strong>{app.name}</strong><p>{app.description}</p></span><span className="app-arrow"><ArrowRight /></span></a>
+            const external = app.external ? { target: '_blank' as const, rel: 'noopener noreferrer' } : {}
+            return <a className={`app-card ${app.accent}`} href={app.path} key={app.path} {...external}>{app.image ? <span className="app-icon has-image"><img src={app.image} alt="" /><Icon className="fallback-icon" /></span> : <span className="app-icon"><Icon /></span>}<span className="app-copy"><small>{app.eyebrow}</small><strong>{app.name}</strong><p>{app.description}</p></span><span className="app-arrow">{app.external ? <ArrowSquareOut /> : <ArrowRight />}</span></a>
           })}
           <article className="app-card coming-soon"><span className="app-icon"><Sparkle /></span><span className="app-copy"><small>Next workspace</small><strong>More to come</strong><p>Your future apps will appear here.</p></span></article>
         </div>
