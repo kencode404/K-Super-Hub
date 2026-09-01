@@ -31,6 +31,8 @@ const apps = [
     eyebrow: 'Personal finance',
     icon: ChartLineUp,
     image: `${import.meta.env.BASE_URL}worthdelta-icon.png`,
+    // The artwork already carries its own padding.
+    insetIcon: false,
     accent: 'lime',
     // Same origin as the hub, so it shares the signed-in session.
     external: false,
@@ -41,7 +43,9 @@ const apps = [
     description: 'Rate every match. Rank every rival.',
     eyebrow: 'Match ratings',
     icon: Racquet,
-    image: null,
+    image: `${import.meta.env.BASE_URL}badminton-elo-icon.png`,
+    // Full-bleed line art: inset it so the rounded tile does not clip it.
+    insetIcon: true,
     accent: 'violet',
     // Hosted off-origin: opens in its own tab and cannot share the session.
     external: true,
@@ -249,7 +253,7 @@ function HubDashboard({ session }: { session: Session }) {
           {apps.map((app) => {
             const Icon = app.icon
             const external = app.external ? { target: '_blank' as const, rel: 'noopener noreferrer' } : {}
-            return <a className={`app-card ${app.accent}`} href={app.path} key={app.path} {...external}>{app.image ? <span className="app-icon has-image"><img src={app.image} alt="" /><Icon className="fallback-icon" /></span> : <span className="app-icon"><Icon /></span>}<span className="app-copy"><small>{app.eyebrow}</small><strong>{app.name}</strong><p>{app.description}</p></span><span className="app-arrow">{app.external ? <ArrowSquareOut /> : <ArrowRight />}</span></a>
+            return <a className={`app-card ${app.accent}`} href={app.path} key={app.path} {...external}><span className={`app-icon has-image${app.insetIcon ? ' inset-image' : ''}`}><img src={app.image} alt="" /><Icon className="fallback-icon" /></span><span className="app-copy"><small>{app.eyebrow}</small><strong>{app.name}</strong><p>{app.description}</p></span><span className="app-arrow">{app.external ? <ArrowSquareOut /> : <ArrowRight />}</span></a>
           })}
           <article className="app-card coming-soon"><span className="app-icon"><Sparkle /></span><span className="app-copy"><small>Next workspace</small><strong>More to come</strong><p>Your future apps will appear here.</p></span></article>
         </div>
