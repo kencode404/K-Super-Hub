@@ -97,6 +97,24 @@ function continueTo(path: string) {
   window.location.replace(new URL(path, window.location.origin).href)
 }
 
+// Off-origin apps (Badminton ELO on Vercel) can't read this origin's
+// storage, so a plain link would open them signed out even though they
+// use the same Supabase auth. Hand the current session over in the URL
+// hash — the fragment never leaves the browser, and supabase-js on the
+// other side (implicit flow + detectSessionInUrl) stores it and strips
+// it from the address bar. Same shape as Supabase's own implicit-flow
+// redirect: access_token, refresh_token, expires_in, token_type.
+function withSessionHandoff(url: string, session: Session | null) {
+  if (!session?.refresh_token) return url
+  const params = new URLSearchParams({
+    access_token: session.access_token,
+    refresh_token: session.refresh_token,
+    expires_in: String(session.expires_in ?? 3600),
+    token_type: session.token_type ?? 'bearer',
+  })
+  return `${url}#${params.toString()}`
+}
+
 function GoogleMark() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true" className="google-mark">
@@ -253,7 +271,9 @@ function HubDashboard({ session }: { session: Session }) {
           {apps.map((app) => {
             const Icon = app.icon
             const external = app.external ? { target: '_blank' as const, rel: 'noopener noreferrer' } : {}
-            return <a className={`app-card ${app.accent}`} href={app.path} key={app.path} {...external}><span className={`app-icon has-image${app.insetIcon ? ' inset-image' : ''}`}><img src={app.image} alt="" /><Icon className="fallback-icon" /></span><span className="app-copy"><small>{app.eyebrow}</small><strong>{app.name}</strong><p>{app.description}</p></span><span className="app-arrow">{app.external ? <ArrowSquareOut /> : <ArrowRight />}</span></a>
+            // Off-origin apps get the session handed over in the URL hash (see withSessionHandoff).
+            const href = app.external ? withSessionHandoff(app.path, session) : app.path
+            return <a className={`app-card ${app.accent}`} href={href} key={app.path} {...external}><span className={`app-icon has-image${app.insetIcon ? ' inset-image' : ''}`}><img src={app.image} alt="" /><Icon className="fallback-icon" /></span><span className="app-copy"><small>{app.eyebrow}</small><strong>{app.name}</strong><p>{app.description}</p></span><span className="app-arrow">{app.external ? <ArrowSquareOut /> : <ArrowRight />}</span></a>
           })}
           <article className="app-card coming-soon"><span className="app-icon"><Sparkle /></span><span className="app-copy"><small>Next workspace</small><strong>More to come</strong><p>Your future apps will appear here.</p></span></article>
         </div>
