@@ -140,11 +140,15 @@ a.app-card:hover { transform: translateY(-4px); border-color: rgba(124,247,201,.
 .tool-card-icon svg { width: 28px; height: 28px; }
 .tool-card .app-copy small { color: var(--violet); }
 
-/* Investment growth tool */
+/* Investment growth tool. The shell is near-black, so every box sitting
+   directly on it carries the palette backdrop (#080c19) itself: the
+   translucent tints layered on top were drawn for that base and wash out
+   to nothing over black. Boxes nested inside these keep compositing
+   against them and need no change. */
 .tool-shell { min-height: 100vh; padding: 0 clamp(20px, 5vw, 76px) 70px; background: #030303; }
 .tool-header { display: flex; align-items: center; justify-content: space-between; min-height: 88px; border-bottom: 1px solid var(--line); }
-.back-button, .tool-account button { display: inline-flex; align-items: center; gap: 8px; padding: 10px 13px; border: 1px solid var(--line); border-radius: 11px; color: #dce3f8; background: rgba(255,255,255,.035); cursor: pointer; font-size: 12px; font-weight: 700; transition: border-color .18s, background .18s; }
-.back-button:hover, .tool-account button:hover { border-color: rgba(124,247,201,.35); background: rgba(124,247,201,.06); }
+.back-button, .tool-account button { display: inline-flex; align-items: center; gap: 8px; padding: 10px 13px; border: 1px solid var(--line); border-radius: 11px; color: #dce3f8; background: #111521; cursor: pointer; font-size: 12px; font-weight: 700; transition: border-color .18s, background .18s; }
+.back-button:hover, .tool-account button:hover { border-color: rgba(124,247,201,.35); background: #0f1a24; }
 .back-button svg { width: 17px; }
 .tool-account { display: flex; align-items: center; gap: 14px; color: var(--muted); font-size: 11px; }
 .tool-account button { padding: 8px 11px; }
@@ -152,13 +156,13 @@ a.app-card:hover { transform: translateY(-4px); border-color: rgba(124,247,201,.
 .tool-intro h1 { margin: 0; font: 600 clamp(46px, 6vw, 78px)/.92 'Space Grotesk', sans-serif; letter-spacing: -.065em; }
 .tool-intro h1 span { color: transparent; background: linear-gradient(100deg, var(--mint), #c8ffeb 48%, var(--violet)); background-clip: text; -webkit-background-clip: text; }
 .tool-intro > div:first-child > p:last-child { max-width: 660px; margin: 24px 0 0; color: var(--muted); font-size: 17px; line-height: 1.65; }
-.method-chip { display: flex; align-items: center; gap: 12px; flex: 0 0 auto; padding: 15px 18px; border: 1px solid rgba(124,247,201,.18); border-radius: 15px; color: var(--mint); background: rgba(124,247,201,.055); }
+.method-chip { display: flex; align-items: center; gap: 12px; flex: 0 0 auto; padding: 15px 18px; border: 1px solid rgba(124,247,201,.18); border-radius: 15px; color: var(--mint); background: #0e1923; }
 .method-chip > svg { width: 21px; }
 .method-chip span { display: grid; }
 .method-chip strong { color: #dce3f8; font-size: 12px; }
 .method-chip small { margin-top: 4px; color: #8190ae; font-size: 10px; }
 .calculator-layout { display: grid; grid-template-columns: minmax(280px, 340px) minmax(0, 1fr); gap: 18px; align-items: start; }
-.calculator-controls, .calculator-results { border: 1px solid var(--line); border-radius: 24px; background: linear-gradient(145deg, rgba(255,255,255,.052), rgba(255,255,255,.024)); box-shadow: 0 24px 70px rgba(0,0,0,.16); }
+.calculator-controls, .calculator-results { border: 1px solid var(--line); border-radius: 24px; background: linear-gradient(145deg, rgba(255,255,255,.052), rgba(255,255,255,.024)) #080c19; box-shadow: 0 24px 70px rgba(0,0,0,.16); }
 .calculator-controls { position: sticky; top: 18px; display: grid; gap: 23px; padding: 27px; }
 .control-heading { display: flex; align-items: flex-start; justify-content: space-between; padding-bottom: 4px; }
 .control-heading h2 { margin: 0; font: 600 26px 'Space Grotesk', sans-serif; }
